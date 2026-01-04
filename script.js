@@ -7,8 +7,6 @@ const leftTitle = document.getElementById('left-title');
 const rightTitle = document.getElementById('right-title');
 const leftStatus = document.getElementById('left-status');
 const rightStatus = document.getElementById('right-status');
-const convertBtn = document.getElementById('convert-btn');
-const convertBtnText = document.getElementById('convert-btn-text');
 const modeBtns = document.querySelectorAll('.mode-btn');
 const appContainer = document.querySelector('.app-container');
 
@@ -53,9 +51,6 @@ function setupEventListeners() {
         }
     });
     
-    // Convert button
-    convertBtn.addEventListener('click', handleConvert);
-    
     // Action buttons
     document.querySelectorAll('.action-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -93,6 +88,7 @@ function setupEventListeners() {
         updateCharCount('left');
         updateLineNumbers('left');
         saveToHistory('left');
+        handleConvert(); // Live conversion
     });
     rightEditor.addEventListener('input', () => {
         updateCharCount('right');
@@ -132,13 +128,11 @@ function updateMode() {
     if (currentMode === 'json-xml') {
         leftTitle.textContent = 'JSON Input';
         rightTitle.textContent = 'XML Output';
-        convertBtnText.textContent = 'Convert JSON to XML';
         leftEditor.placeholder = 'Enter your JSON here...';
         rightEditor.placeholder = 'XML output will appear here...';
     } else {
         leftTitle.textContent = 'XML Input';
         rightTitle.textContent = 'JSON Output';
-        convertBtnText.textContent = 'Convert XML to JSON';
         leftEditor.placeholder = 'Enter your XML here...';
         rightEditor.placeholder = 'JSON output will appear here...';
     }
@@ -194,6 +188,7 @@ function loadSample() {
     updateCharCount('left');
     updateLineNumbers('left');
     saveToHistory('left');
+    handleConvert(); // Live conversion after loading sample
     setTimeout(() => updateStatus('left', 'Ready', false), 2000);
 }
 
@@ -211,6 +206,7 @@ function handleAction(action) {
             break;
         case 'beautify-left':
             beautifyEditor('left');
+            handleConvert(); // Live conversion after beautify
             break;
         case 'beautify-right':
             beautifyEditor('right');
@@ -220,9 +216,13 @@ function handleAction(action) {
             break;
         case 'clear-left':
             leftEditor.value = '';
+            rightEditor.value = '';
             updateStatus('left', 'Cleared', false);
+            updateStatus('right', 'Cleared', false);
             updateCharCount('left');
+            updateCharCount('right');
             updateLineNumbers('left');
+            updateLineNumbers('right');
             saveToHistory('left');
             break;
         case 'clear-right':
@@ -346,6 +346,7 @@ function sortJsonKeys() {
         updateStatus('left', 'Keys sorted', true);
         updateCharCount('left');
         updateLineNumbers('left');
+        handleConvert(); // Live conversion after sorting
     } catch (error) {
         updateStatus('left', '✗ ' + error.message, false, true);
     }
@@ -379,6 +380,7 @@ function changeCasing(caseType) {
         updateStatus('left', `Converted to ${caseType}`, true);
         updateCharCount('left');
         updateLineNumbers('left');
+        handleConvert(); // Live conversion after casing change
     } catch (error) {
         updateStatus('left', '✗ ' + error.message, false, true);
     }
@@ -625,6 +627,9 @@ async function pasteFromClipboard(side) {
         updateCharCount(side);
         updateLineNumbers(side);
         saveToHistory(side);
+        if (side === 'left') {
+            handleConvert(); // Live conversion after paste
+        }
         setTimeout(() => updateStatus(side, 'Ready', false), 2000);
     } catch (error) {
         updateStatus(side, '✗ Failed to paste', false, true);
