@@ -15,6 +15,11 @@ const appContainer = document.querySelector('.app-container');
 // Current mode
 let currentMode = 'json-xml';
 
+// History for undo functionality
+let leftHistory = [];
+let rightHistory = [];
+const MAX_HISTORY = 50;
+
 // Initialize
 function init() {
     // Check URL hash for mode
@@ -87,10 +92,12 @@ function setupEventListeners() {
     leftEditor.addEventListener('input', () => {
         updateCharCount('left');
         updateLineNumbers('left');
+        saveToHistory('left');
     });
     rightEditor.addEventListener('input', () => {
         updateCharCount('right');
         updateLineNumbers('right');
+        saveToHistory('right');
     });
     
     // Sync scroll for line numbers
@@ -111,6 +118,16 @@ function updateMode() {
     
     // Update container class
     appContainer.className = 'app-container mode-' + currentMode;
+    
+    // Update favicon based on mode
+    const favicon = document.getElementById('favicon');
+    if (currentMode === 'json-xml') {
+        favicon.href = 'favicon-json-xml.svg';
+        document.title = 'JSON → XML Converter';
+    } else {
+        favicon.href = 'favicon-xml-json.svg';
+        document.title = 'XML → JSON Converter';
+    }
     
     if (currentMode === 'json-xml') {
         leftTitle.textContent = 'JSON Input';
@@ -159,15 +176,38 @@ function handleAction(action) {
             updateStatus('left', 'Cleared', false);
             updateCharCount('left');
             updateLineNumbers('left');
+            saveToHistory('left');
             break;
         case 'clear-right':
             rightEditor.value = '';
             updateStatus('right', 'Cleared', false);
             updateCharCount('right');
             updateLineNumbers('right');
+            saveToHistory('right');
+            break;
+        case 'copy-left':
+            copyToClipboard(leftEditor.value, 'left');
             break;
         case 'copy-right':
-            copyToClipboard(rightEditor.value);
+            copyToClipboard(rightEditor.value, 'right');
+            break;
+        case 'paste-left':
+            pasteFromClipboard('left');
+            break;
+        case 'paste-right':
+            pasteFromClipboard('right');
+            break;
+        case 'download-left':
+            downloadContent('left');
+            break;
+        case 'download-right':
+            downloadContent('right');
+            break;
+        case 'undo-left':
+            undoEdit('left');
+            break;
+        case 'undo-right':
+            undoEdit('right');
             break;
     }
 }
@@ -505,14 +545,129 @@ function formatXML(xml) {
 }
 
 // Copy to Clipboard
-async function copyToClipboard(text) {
+async function copyToClipboard(text, side) {
+    if (!text) {
+        updateStatus(side, 'No content to copy', false);
+        return;
+    }
+    
     try {
         await navigator.clipboard.writeText(text);
-        updateStatus('right', '✓ Copied to clipboard', true);
-        setTimeout(() => updateStatus('right', 'Ready', false), 2000);
+        updateStatus(side, '✓ Copied to clipboard', true);
+        setTimeout(() => updateStatus(side, 'Ready', false), 2000);
     } catch (error) {
-        updateStatus('right', '✗ Failed to copy', false, true);
+        updateStatus(side, '✗ Failed to copy', false, true);
     }
+}
+
+// Paste from Clipboard
+async function pasteFromClipboard(side) {
+    try {
+        const text = await navigator.clipboard.readText();
+        const editor = side === 'left' ? leftEditor : rightEditor;
+        editor.value = text;
+        updateStatus(side, '✓ Pasted from clipboard', true);
+        updateCharCount(side);
+        updateLineNumbers(side);
+        saveToHistory(side);
+        setTimeout(() => updateStatus(side, 'Ready', false), 2000);
+    } catch (error) {
+        updateStatus(side, '✗ Failed to paste', false, true);
+    }
+}
+
+// Download Content
+function downloadContent(side) {
+    const editor = side === 'left' ? leftEditor : rightEditor;
+    const content = editor.value;
+    
+    if (!content) {
+        updateStatus(side, 'No content to download', false);
+        return;
+    }
+    
+    // Determine file extension and name based on mode and side
+    let filename, mimeType;
+    
+    if (currentMode === 'json-xml') {
+        if (side === 'left') {
+            filename = 'data.json';
+            mimeType = 'application/json';
+        } else {
+            filename = 'data.xml';
+            mimeType = 'application/xml';
+        }
+    } else {
+        if (side === 'left') {
+            filename = 'data.xml';
+            mimeType = 'application/xml';
+        } else {
+            filename = 'data.json';
+            mimeType = 'application/json';
+        }
+    }
+    
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    updateStatus(side, `✓ Downloaded ${filename}`, true);
+    setTimeout(() => updateStatus(side, 'Ready', false), 2000);
+}
+
+// Save to History
+function saveToHistory(side) {
+    const editor = side === 'left' ? leftEditor : rightEditor;
+    const history = side === 'left' ? leftHistory : rightHistory;
+    const content = editor.value;
+    
+    // Don't save if it's the same as the last entry
+    if (history.length > 0 && history[history.length - 1] === content) {
+        return;
+    }
+    
+    history.push(content);
+    
+    // Limit history size
+    if (history.length > MAX_HISTORY) {
+        history.shift();
+    }
+    
+    // Update the reference
+    if (side === 'left') {
+        leftHistory = history;
+    } else {
+        rightHistory = history;
+    }
+}
+
+// Undo Edit
+function undoEdit(side) {
+    const editor = side === 'left' ? leftEditor : rightEditor;
+    const history = side === 'left' ? leftHistory : rightHistory;
+    
+    if (history.length <= 1) {
+        updateStatus(side, 'Nothing to undo', false);
+        return;
+    }
+    
+    // Remove current state
+    history.pop();
+    
+    // Get previous state
+    const previousContent = history[history.length - 1];
+    editor.value = previousContent;
+    
+    updateStatus(side, '✓ Undo successful', true);
+    updateCharCount(side);
+    updateLineNumbers(side);
+    setTimeout(() => updateStatus(side, 'Ready', false), 2000);
 }
 
 // Update Status
