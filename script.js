@@ -522,8 +522,16 @@ function formatXML(xml) {
     let formatted = '';
     let pad = 0;
     
-    xml = xml.replace(reg, '$1\n$2$3');
+    // Normalize existing formatting so beautify is idempotent
+    xml = xml
+        .trim()
+        .replace(/\r\n/g, '\n')
+        .replace(/>\s+</g, '><')
+        .replace(reg, '$1\n$2$3');
+
     xml.split('\n').forEach(node => {
+        node = node.trim();
+        if (!node) return;
         let indent = 0;
         if (node.match(/.+<\/\w[^>]*>$/)) {
             indent = 0;
