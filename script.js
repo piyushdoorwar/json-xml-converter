@@ -135,16 +135,48 @@ function updateMode() {
         convertBtnText.textContent = 'Convert JSON to XML';
         leftEditor.placeholder = 'Enter your JSON here...';
         rightEditor.placeholder = 'XML output will appear here...';
+        
+        // Sample JSON
+        leftEditor.value = `{
+  "person": {
+    "name": "John Doe",
+    "age": 30,
+    "email": "john.doe@example.com",
+    "address": {
+      "street": "123 Main St",
+      "city": "New York",
+      "zipCode": "10001"
+    },
+    "hobbies": ["reading", "coding", "traveling"],
+    "isActive": true
+  }
+}`;
     } else {
         leftTitle.textContent = 'XML Input';
         rightTitle.textContent = 'JSON Output';
         convertBtnText.textContent = 'Convert XML to JSON';
         leftEditor.placeholder = 'Enter your XML here...';
         rightEditor.placeholder = 'JSON output will appear here...';
+        
+        // Sample XML
+        leftEditor.value = `<?xml version="1.0" encoding="UTF-8"?>
+<library>
+  <book id="1">
+    <title>The Great Gatsby</title>
+    <author>F. Scott Fitzgerald</author>
+    <year>1925</year>
+    <genre>Classic</genre>
+  </book>
+  <book id="2">
+    <title>To Kill a Mockingbird</title>
+    <author>Harper Lee</author>
+    <year>1960</year>
+    <genre>Fiction</genre>
+  </book>
+</library>`;
     }
     
-    // Clear editors when switching
-    leftEditor.value = '';
+    // Clear right editor when switching
     rightEditor.value = '';
     updateStatus('left', 'Ready', false);
     updateStatus('right', 'Ready', false);
