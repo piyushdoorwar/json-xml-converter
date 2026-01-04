@@ -173,6 +173,7 @@ body::before {
     overflow: hidden;
     gap: 1px;
     background-color: var(--border);
+    padding: 0 clamp(1.5rem, 3vw, 2.5rem);
 }
 
 .editor-panel {
@@ -254,8 +255,8 @@ body::before {
 }
 
 .action-btn svg {
-    width: 14px;
-    height: 14px;
+    width: 18px;
+    height: 18px;
 }
 
 /* Dropdown */
@@ -528,6 +529,35 @@ body::before {
 .convert-btn svg {
     width: 20px;
     height: 20px;
+}
+
+/* Action Button Tooltip */
+.action-btn::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(-4px);
+    padding: 0.5rem 0.875rem;
+    background: var(--panel-bg-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 0.75rem;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    z-index: 1000;
+    box-shadow: var(--shadow-md);
+    font-weight: 500;
+}
+
+.action-btn:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
 }
 
 /* Visibility Classes */
