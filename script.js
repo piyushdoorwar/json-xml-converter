@@ -135,7 +135,27 @@ function updateMode() {
         convertBtnText.textContent = 'Convert JSON to XML';
         leftEditor.placeholder = 'Enter your JSON here...';
         rightEditor.placeholder = 'XML output will appear here...';
-        
+    } else {
+        leftTitle.textContent = 'XML Input';
+        rightTitle.textContent = 'JSON Output';
+        convertBtnText.textContent = 'Convert XML to JSON';
+        leftEditor.placeholder = 'Enter your XML here...';
+        rightEditor.placeholder = 'JSON output will appear here...';
+    }
+    
+    // Clear editors when switching
+    leftEditor.value = '';
+    rightEditor.value = '';
+    updateStatus('left', 'Ready', false);
+    updateStatus('right', 'Ready', false);
+    updateCharCounts();
+    updateLineNumbers('left');
+    updateLineNumbers('right');
+}
+
+// Load Sample Data
+function loadSample() {
+    if (currentMode === 'json-xml') {
         // Sample JSON
         leftEditor.value = `{
   "person": {
@@ -152,12 +172,6 @@ function updateMode() {
   }
 }`;
     } else {
-        leftTitle.textContent = 'XML Input';
-        rightTitle.textContent = 'JSON Output';
-        convertBtnText.textContent = 'Convert XML to JSON';
-        leftEditor.placeholder = 'Enter your XML here...';
-        rightEditor.placeholder = 'JSON output will appear here...';
-        
         // Sample XML
         leftEditor.value = `<?xml version="1.0" encoding="UTF-8"?>
 <library>
@@ -176,13 +190,11 @@ function updateMode() {
 </library>`;
     }
     
-    // Clear right editor when switching
-    rightEditor.value = '';
-    updateStatus('left', 'Ready', false);
-    updateStatus('right', 'Ready', false);
-    updateCharCounts();
+    updateStatus('left', '✓ Sample loaded', true);
+    updateCharCount('left');
     updateLineNumbers('left');
-    updateLineNumbers('right');
+    saveToHistory('left');
+    setTimeout(() => updateStatus('left', 'Ready', false), 2000);
 }
 
 // Handle Actions
@@ -193,6 +205,9 @@ function handleAction(action) {
             break;
         case 'validate-right':
             validateEditor('right');
+            break;
+        case 'load-sample':
+            loadSample();
             break;
         case 'beautify-left':
             beautifyEditor('left');
